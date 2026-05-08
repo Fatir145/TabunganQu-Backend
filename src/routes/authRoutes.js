@@ -24,7 +24,7 @@ router.post('/google', googleAuth);
 router.use(protect);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
-router.post('/profile/avatar', uploadAvatar);
+router.post('/profile/avatar', upload.single('avatar'), uploadAvatar);
 router.delete('/profile/avatar', deleteAvatar);
 router.put('/password', changePassword);
 router.delete('/account', deleteAccount);

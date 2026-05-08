@@ -21,7 +21,7 @@ class User {
 
   static async findById(id) {
     const [rows] = await pool.execute(
-      'SELECT id, name, email, avatar, created_at FROM users WHERE id = ?',
+      'SELECT id, name, email, avatar, google_id, created_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -72,16 +72,16 @@ class User {
     return rows[0];
   }
 
-  static async createGoogleUser({ googleId, name, email, avatar, password }) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  static async createGoogleUser({ googleId, name, email, avatar }) {
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password, avatar, google_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, avatar || null, googleId]
+      'INSERT INTO users (name, email, avatar, google_id) VALUES (?, ?, ?, ?)',
+      [name, email, avatar || null, googleId]
     );
     return this.findById(result.insertId);
   }
 
   static async comparePassword(password, hashedPassword) {
+    if (!hashedPassword) return false;
     return bcrypt.compare(password, hashedPassword);
   }
 }

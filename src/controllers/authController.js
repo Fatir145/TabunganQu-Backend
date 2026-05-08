@@ -132,13 +132,13 @@ const updateProfile = async (req, res, next) => {
 
 const uploadAvatar = async (req, res, next) => {
   try {
-    const { avatar } = req.body;
-    
-    if (!avatar) {
+    if (!req.file) {
       return res.status(400).json({ success: false, message: 'Harap pilih file gambar terlebih dahulu' });
     }
 
-    const updatedUser = await User.update(req.user.id, { avatar });
+    // Format expected by the client: /uploads/avatars/avatar-1234.jpg
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const updatedUser = await User.update(req.user.id, { avatar: avatarUrl });
     
     res.json({
       success: true,
@@ -196,22 +196,14 @@ const deleteAccount = async (req, res, next) => {
 
 const googleAuth = async (req, res, next) => {
   try {
-    const { credential, password, captchaToken, type = 'login' } = req.body;
+    const { credential, captchaToken, type = 'login' } = req.body;
 
     if (!captchaToken) {
       return res.status(400).json({ success: false, message: 'Verifikasi reCAPTCHA diperlukan' });
     }
     
-    // Bypass strict backend reCAPTCHA verification for Google Auth because the multi-step 
-    // flow (Google Popup -> Password Modal) often causes the 2-minute token to expire. 
-    // The Google JWT verification below serves as a strong anti-bot measure instead.
-
     if (!credential) {
       return res.status(400).json({ success: false, message: 'Credential Google diperlukan' });
-    }
-
-    if (!password) {
-      return res.status(400).json({ success: false, message: 'Password harus diisi' });
     }
 
     let payload;
@@ -237,15 +229,10 @@ const googleAuth = async (req, res, next) => {
       if (user) {
         return res.status(400).json({ success: false, message: 'Akun sudah terdaftar. Silakan login.' });
       }
-      user = await User.createGoogleUser({ googleId, name, email, avatar: picture, password });
+      user = await User.createGoogleUser({ googleId, name, email, avatar: picture });
     } else {
       if (!user) {
         return res.status(404).json({ success: false, message: 'Akun belum terdaftar. Silakan register terlebih dahulu.' });
-      }
-
-      const isPasswordValid = await User.comparePassword(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ success: false, message: 'Password salah' });
       }
 
       if (!user.google_id) {
