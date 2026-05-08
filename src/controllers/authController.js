@@ -132,13 +132,13 @@ const updateProfile = async (req, res, next) => {
 
 const uploadAvatar = async (req, res, next) => {
   try {
-    if (!req.file) {
+    const { avatar } = req.body;
+    
+    if (!avatar) {
       return res.status(400).json({ success: false, message: 'Harap pilih file gambar terlebih dahulu' });
     }
 
-    // Format expected by the client: /uploads/avatars/avatar-1234.jpg
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    const updatedUser = await User.update(req.user.id, { avatar: avatarUrl });
+    const updatedUser = await User.update(req.user.id, { avatar });
     
     res.json({
       success: true,
